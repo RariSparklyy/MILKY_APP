@@ -14,26 +14,34 @@ const sendMessage = async () => {
   const text = userMessage.value.trim();
   if (!text) return;
 
-  // 1. Log User Message immediately (Right side)
+  // 1. Log User Message
   store.addMilkyLog(text, 'user');
-  userMessage.value = ''; // Clear input
+  userMessage.value = ''; 
 
-  // 2. Log a "Thinking" placeholder for Milky
-  store.addMilkyLog("Thinking...", 'milky');
+  // 2. Log Placeholder
+  const loadingId = store.addMilkyLog("Thinking...", 'milky');
 
-  // 3. Ask Milky with "Friend/Chat" Context
-  const prompt = `User said: "${text}". 
-  Reply as a supportive, empathetic ADHD body-double/friend. 
-  Keep it conversational and brief (max 2-3 sentences). 
-  Do NOT give medical/clinical advice. 
-  If they seem overwhelmed, suggest a small first step.`;
+  // --- NEW: Context Injection ---
+  let context = "You are a supportive friend.";
+  if (store.timer.isRunning && store.timer.activeTaskId) {
+    const taskName = store.getActiveTaskName();
+    context = `
+      You are a Body Double currently watching the user work.
+      Current Task: "${taskName}".
+      The user is supposed to be focusing on this right now.
+      If they are chatting about something unrelated, gently steer them back to "${taskName}".
+      If they are asking for help with the task, help them.
+    `;
+  }
+  // -----------------------------
 
-  const response = await askMilky(prompt, "You are a supportive friend.");
+  const prompt = `User said: "${text}". Reply briefly based on context.`;
+  const response = await askMilky(prompt, context);
 
-  // 4. Update the placeholder with the real response
-  // Note: Since we pushed 'User' then 'Thinking', the placeholder is at index 0.
-  store.milkyLogs[0].text = response;
+  // 4. Update Log
+  store.updateLogContent(loadingId, response);
 };
+
 
 // Formatting Helper
 const parseMarkdown = (text) => {
@@ -71,8 +79,8 @@ const parseMarkdown = (text) => {
                log.type === 'user' 
                  ? 'bg-blue-900/30 border-blue-500/30 rounded-tr-sm' 
                  : index === 0 
-                    ? 'bg-slate-900 border-primary shadow-md rounded-tl-sm' // Active Milky
-                    : 'bg-slate-900/40 border-slate-700/50 opacity-75 rounded-tl-sm' // Old Milky
+                    ? 'bg-slate-900 border-primary shadow-md rounded-tl-sm'
+                    : 'bg-slate-900/40 border-slate-700/50 opacity-75 rounded-tl-sm'
              ]">
           
           <div class="flex items-start gap-3" :class="log.type === 'user' ? 'flex-row-reverse' : 'flex-row'">
@@ -105,11 +113,9 @@ const parseMarkdown = (text) => {
 </template>
 
 <style scoped>
-/* Ensure the fade-in animation feels smooth */
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }

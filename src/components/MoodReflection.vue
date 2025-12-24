@@ -7,12 +7,12 @@ const store = useFocusStore();
 const { askMilky } = useMilky();
 
 const logMood = async (mood) => {
-  store.lastSession.mood = mood; // Hide the tracker
+  store.lastSession.mood = mood; 
   
-  // Update Logs with "Thinking..."
-  store.addMilkyLog("Analyzing session data...");
+  // 1. Log placeholder and CAPTURE ID
+  const loadingId = store.addMilkyLog("Analyzing session data...");
 
-  // Construct a FACTUAL prompt
+  // 2. Generate Prompt
   const durationMins = Math.floor(store.lastSession.duration / 60);
   const prompt = `
     User finished a ${store.lastSession.mode} session.
@@ -22,15 +22,15 @@ const logMood = async (mood) => {
     Generate a log entry. 
     IF mood is 'Struggling', be empathetic. 
     IF mood is 'Great', be celebratory.
-    Mention the EXACT duration provided.
+    Mention the EXACT duration provided. Use bolding for stats.
   `;
 
-  const response = await askMilky(prompt, "You are a factual but supportive logger. Use bolding for stats.");
+  const response = await askMilky(prompt, "You are a factual but supportive logger.");
   
-  // Overwrite the "Thinking..." log
-  store.milkyLogs[0].text = response;
+  // 3. Update SPECIFIC log
+  store.updateLogContent(loadingId, response);
   
-  // Reset session so the modal hides
+  // Reset session
   store.lastSession.duration = 0; 
 };
 </script>

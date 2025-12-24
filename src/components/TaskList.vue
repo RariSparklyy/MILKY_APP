@@ -10,7 +10,7 @@ const { askMilky, isThinking } = useMilky();
 const newTask = ref('');
 const selectedQuadrant = ref('do_first');
 
-// Priority Map for Sorting (Lower number = Higher Priority)
+// Priority Map for Sorting
 const priorityMap = {
   do_first: 1,
   schedule: 2,
@@ -18,13 +18,13 @@ const priorityMap = {
   eliminate: 4
 };
 
-// Computed: Automatically sorts tasks based on Matrix rules
+// Computed: Automatically sorts tasks
 const sortedTasks = computed(() => {
   return [...store.tasks].sort((a, b) => {
     // 1. Move Completed items to the very bottom
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
     
-    // 2. Sort by Quadrant Priority (Do First -> Eliminate)
+    // 2. Sort by Quadrant Priority
     const pA = priorityMap[a.quadrant] || 5;
     const pB = priorityMap[b.quadrant] || 5;
     if (pA !== pB) return pA - pB;
@@ -40,7 +40,7 @@ const addNew = () => {
   newTask.value = '';
 };
 
-// "Wall of Awful" Breaker
+// Breakdown
 const breakDown = async (task) => {
   if (task.aiSteps) return;
   const prompt = `Break down "${task.text}" into 3 very small steps. Return HTML <li> tags only.`;
@@ -50,15 +50,12 @@ const breakDown = async (task) => {
 
 // Handle Task Completion with AI Reward
 const handleCheck = async (task) => {
-  // 1. Toggle immediately for UI responsiveness
   store.toggleTaskComplete(task.id);
 
-  // 2. If completed, trigger Milky for praise
   if (task.completed) {
-    // Add temporary placeholder
-    store.addMilkyLog(`🎉 Hooray! Finishing "${task.text}"...`);
+    // 1. Log placeholder and CAPTURE ID
+    const loadingId = store.addMilkyLog(`🎉 Hooray! Finishing "${task.text}"...`);
 
-    // 3. Context-Aware Prompt
     const qMap = {
       do_first: "Urgent Crisis (High Stress)",
       schedule: "Strategic Planning (High Value)",
@@ -72,16 +69,12 @@ const handleCheck = async (task) => {
       Priority Context: ${qMap[task.quadrant]}.
       
       Give specific, high-energy praise (max 1 sentence).
-      - If Urgent: Celebrate the relief and lowering stress.
-      - If Strategic: Celebrate the foresight and investment.
-      - If Delegate/Eliminate: Celebrate clearing the clutter.
     `;
 
-    // 4. Get Insight
-    const praise = await askMilky(prompt, "You are an excited ADHD cheerleader.");
+    const praise = await askMilky(prompt, "You are an excited cheerleader.");
     
-    // 5. Update the log
-    store.milkyLogs[0].text = praise;
+    // 2. Update SPECIFIC log
+    store.updateLogContent(loadingId, praise);
   }
 };
 
@@ -100,7 +93,6 @@ const getBorderColor = (q) => {
   return 'border-slate-600';
 };
 
-// Dynamic class for the selector dropdown
 const selectorClass = computed(() => {
   if (selectedQuadrant.value === 'do_first') return 'text-urgent border-urgent';
   if (selectedQuadrant.value === 'schedule') return 'text-blue-400 border-blue-400';
@@ -185,7 +177,6 @@ const selectorClass = computed(() => {
 </template>
 
 <style scoped>
-/* Custom scrollbar for the task list only */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
