@@ -2,6 +2,7 @@
 import HyperfocusTimer from './components/HyperfocusTimer.vue';
 import TaskList from './components/TaskList.vue';
 import BodyDouble from './components/BodyDouble.vue';
+import MoodReflection from './components/MoodReflection.vue'; // <--- NEW IMPORT
 </script>
 
 <template>
@@ -15,7 +16,7 @@ import BodyDouble from './components/BodyDouble.vue';
         </header>
         
         <HyperfocusTimer />
-        <BodyDouble />
+        <MoodReflection /> <BodyDouble />
       </div>
 
       <div class="lg:col-span-2">
