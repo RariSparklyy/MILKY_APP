@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onUnmounted, ref, watch } from 'vue';
-import { Play, Pause, RotateCcw, Eye, EyeOff, UserCheck } from 'lucide-vue-next';
+import { Play, Pause, RotateCcw, Eye, EyeOff, UserCheck, Info, X, Clock, Zap } from 'lucide-vue-next';
 import { useFocusStore } from '../stores/useFocusStore';
 import { useMilky } from '../composables/useMilky';
 
@@ -10,15 +10,15 @@ let interval = null;
 
 const showDigitalTime = ref(true); 
 const setTimeValue = ref(25); 
+const showInfo = ref(false); 
 
 // Visual Math
 const radius = 120;
 const circumference = 2 * Math.PI * radius;
 
-// --- Dynamic Slider Limits ---
 const sliderMax = computed(() => {
   if (store.timer.mode === 'short_break') return 10;
-  return 120; // Focus & Long Break
+  return 120; 
 });
 
 watch(setTimeValue, (newVal) => {
@@ -64,7 +64,6 @@ const toggleTimer = async () => {
   store.timer.isRunning = !store.timer.isRunning;
   
   if (store.timer.isRunning) {
-    // 1. STARTING LOG (Only if Focus + Body Double + Task Selected)
     if (store.timer.mode === 'focus' && store.timer.bodyDoubleEnabled && store.timer.activeTaskId) {
       const taskName = store.getActiveTaskName();
       store.addMilkyLog(`I'll be watching while you work on: "${taskName}". Good luck!`, 'milky');
@@ -73,7 +72,6 @@ const toggleTimer = async () => {
     interval = setInterval(() => {
       store.timer.timeLeft--;
 
-      // 2. Midway Check-in (Only in Focus Mode)
       if (store.timer.mode === 'focus') {
         const midwayPoint = Math.floor(store.timer.initialDuration / 2);
         if (store.timer.timeLeft === midwayPoint) {
@@ -81,28 +79,22 @@ const toggleTimer = async () => {
         }
       }
       
-      // 3. Hyperfocus Trigger (Exactly at 00:00)
       if (store.timer.timeLeft === 0 && store.timer.mode === 'focus') {
         store.timer.mode = 'hyperfocus';
 
-        // Trigger Body Double Update
         if (store.timer.bodyDoubleEnabled && store.timer.activeTaskId) {
           const taskName = store.getActiveTaskName();
-          
           const loadingId = store.addMilkyLog("Hyperfocus activated! 🚀", 'milky');
-
           const prompt = `
             The timer just hit 00:00, but the user is still going!
             They have entered HYPERFOCUS mode on task: "${taskName}".
-            Give them a short, high-energy encouragement to ride the dopamine wave.
+            Give them a short, high-energy encouragement.
           `;
-
           askMilky(prompt, "You are an excited flow-state coach.")
             .then(response => store.updateLogContent(loadingId, response));
         }
       }
 
-      // 4. Stop ONLY if it is a BREAK session (Breaks don't go negative)
       else if (store.timer.timeLeft <= 0 && (store.timer.mode === 'short_break' || store.timer.mode === 'long_break')) {
         stopSession(); 
       }
@@ -129,7 +121,6 @@ const stopSession = async () => {
 
   store.timer.mode = 'focus';
   store.timer.activeTaskId = null; 
-  // Reset slider to default focus time
   setTimeValue.value = 25;
   store.timer.timeLeft = 25 * 60;
   store.timer.initialDuration = 25 * 60;
@@ -148,8 +139,74 @@ onUnmounted(() => clearInterval(interval));
 </script>
 
 <template>
-  <div class="flex flex-col items-center p-6 bg-surface rounded-xl shadow-lg border border-slate-700 w-full">
+  <div class="flex flex-col items-center p-6 bg-surface rounded-xl shadow-lg border border-slate-700 w-full relative">
     
+    <div class="absolute top-4 right-4 flex gap-2 z-10">
+      <button @click="showDigitalTime = !showDigitalTime" class="p-2 text-slate-500 hover:text-slate-200 transition bg-slate-800/50 rounded-lg hover:bg-slate-700" title="Toggle Clock">
+        <component :is="showDigitalTime ? Eye : EyeOff" class="w-4 h-4" />
+      </button>
+      <button @click="showInfo = true" class="p-2 text-slate-500 hover:text-primary transition bg-slate-800/50 rounded-lg hover:bg-slate-700" title="How to use">
+        <Info class="w-4 h-4" />
+      </button>
+    </div>
+
+    <Transition name="fade">
+      <div v-if="showInfo" class="absolute inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl" @click="showInfo = false"></div>
+        
+        <div class="bg-slate-900 border border-slate-600 rounded-xl p-6 shadow-2xl relative w-full h-full overflow-y-auto custom-scrollbar">
+          <button @click="showInfo = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-100">
+            <X class="w-5 h-5" />
+          </button>
+
+          <h3 class="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+            <Info class="w-5 h-5" /> How to use Milky
+          </h3>
+
+          <div class="space-y-6 text-sm text-slate-300">
+            
+            <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+              <h4 class="font-bold text-slate-100 mb-2 flex items-center gap-2">
+                <Clock class="w-4 h-4 text-blue-400" /> Adaptive Pomodoro
+              </h4>
+              <p class="mb-2">This is an evolved version of the Pomodoro technique.</p>
+              <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                <li><strong>Dynamic Time:</strong> Use the slider to change duration instantly.</li>
+                <li><strong>Hyperfocus Safety:</strong> If the timer hits 00:00 and you're in the zone, <span class="text-purple-400 font-bold">don't stop!</span> The timer will count UP (negative time) to track your flow state.</li>
+              </ul>
+            </div>
+
+            <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+              <h4 class="font-bold text-slate-100 mb-2 flex items-center gap-2">
+                <UserCheck class="w-4 h-4 text-primary" /> Body Double Mode
+              </h4>
+              <p class="text-slate-400">
+                Turn this on and select a task. Milky becomes your accountability partner.
+                It will check in on you halfway through, and you can chat with it for gentle pressure if you get distracted.
+              </p>
+            </div>
+
+            <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+              <h4 class="font-bold text-slate-100 mb-2 flex items-center gap-2">
+                <Zap class="w-4 h-4 text-yellow-400" /> Pro Tips
+              </h4>
+              <div class="space-y-2">
+                <div class="flex gap-2 items-start">
+                  <span class="text-xs font-bold bg-slate-700 px-1.5 rounded text-blue-300 mt-0.5">FOCUS</span>
+                  <span class="text-slate-400">Start with 25m. If you feel resistance, lower it to 10m just to start.</span>
+                </div>
+                <div class="flex gap-2 items-start">
+                  <span class="text-xs font-bold bg-slate-700 px-1.5 rounded text-green-300 mt-0.5">BREAK</span>
+                  <span class="text-slate-400">Short breaks are capped at 10m to keep momentum. Stand up and hydrate!</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <div class="relative mb-6 group">
       <svg class="w-64 h-64 transform -rotate-90">
         <circle cx="128" cy="128" :r="radius" stroke="#334155" stroke-width="8" fill="transparent" />
@@ -176,10 +233,6 @@ onUnmounted(() => clearInterval(interval));
           {{ store.timer.mode === 'hyperfocus' ? 'Flow State' : store.timer.mode.replace('_', ' ') }}
         </span>
       </div>
-
-      <button @click="showDigitalTime = !showDigitalTime" class="absolute top-0 right-0 p-2 text-slate-600 hover:text-slate-300 transition opacity-0 group-hover:opacity-100">
-        <component :is="showDigitalTime ? Eye : EyeOff" class="w-4 h-4" />
-      </button>
     </div>
 
     <div v-if="!store.timer.isRunning && store.timer.mode === 'focus'" class="w-full mb-6 animate-fade-in bg-slate-900/50 p-3 rounded-lg border border-slate-700">
@@ -259,5 +312,19 @@ input[type=range]::-webkit-slider-thumb {
   background: #2dd4bf;
   margin-top: -4px;
   box-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+/* Modal Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
