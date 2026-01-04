@@ -15,6 +15,12 @@ const setTimeValue = ref(25);
 const radius = 120;
 const circumference = 2 * Math.PI * radius;
 
+// --- NEW: Dynamic Slider Limits ---
+const sliderMax = computed(() => {
+  if (store.timer.mode === 'short_break') return 10;
+  return 120; // Focus & Long Break
+});
+
 watch(setTimeValue, (newVal) => {
   if (!store.timer.isRunning) {
     store.timer.initialDuration = newVal * 60;
@@ -36,7 +42,6 @@ const formatTime = computed(() => {
   return `${store.timer.timeLeft < 0 ? '+' : ''}${m}:${s.toString().padStart(2, '0')}`;
 });
 
-// Filter incomplete tasks for dropdown
 const availableTasks = computed(() => store.tasks.filter(t => !t.completed));
 
 const triggerCheckIn = async () => {
@@ -59,7 +64,6 @@ const toggleTimer = async () => {
   store.timer.isRunning = !store.timer.isRunning;
   
   if (store.timer.isRunning) {
-    // STARTING LOG (Only log if in Focus mode with Body Double)
     if (store.timer.mode === 'focus' && store.timer.bodyDoubleEnabled && store.timer.activeTaskId) {
       const taskName = store.getActiveTaskName();
       store.addMilkyLog(`I'll be watching while you work on: "${taskName}". Good luck!`, 'milky');
@@ -68,7 +72,6 @@ const toggleTimer = async () => {
     interval = setInterval(() => {
       store.timer.timeLeft--;
 
-      // Midway Check-in (Only in Focus Mode)
       if (store.timer.mode === 'focus') {
         const midwayPoint = Math.floor(store.timer.initialDuration / 2);
         if (store.timer.timeLeft === midwayPoint) {
@@ -76,15 +79,11 @@ const toggleTimer = async () => {
         }
       }
       
-      // 1. Enter Hyperfocus (Focus mode crosses 0)
       if (store.timer.timeLeft < 0 && store.timer.mode === 'focus') {
         store.timer.mode = 'hyperfocus';
-      } 
-      // 2. Stop ONLY if it is a BREAK session
-      else if (store.timer.timeLeft <= 0 && (store.timer.mode === 'short_break' || store.timer.mode === 'long_break')) {
+      } else if (store.timer.timeLeft <= 0 && (store.timer.mode === 'short_break' || store.timer.mode === 'long_break')) {
         stopSession(); 
       }
-
     }, 1000);
   } else {
     clearInterval(interval);
@@ -105,11 +104,12 @@ const stopSession = async () => {
     mood: null 
   };
 
-  // Reset Body Double Context
   store.timer.mode = 'focus';
   store.timer.activeTaskId = null; 
-  store.timer.timeLeft = setTimeValue.value * 60;
-  store.timer.initialDuration = setTimeValue.value * 60;
+  // Reset slider to default focus time
+  setTimeValue.value = 25;
+  store.timer.timeLeft = 25 * 60;
+  store.timer.initialDuration = 25 * 60;
 };
 
 const setMode = (mode, minutes) => {
@@ -188,11 +188,21 @@ onUnmounted(() => clearInterval(interval));
         <span>Duration</span>
         <span class="text-primary font-bold">{{ setTimeValue }} min</span>
       </div>
-      <input type="range" v-model.number="setTimeValue" min="1" max="120" step="1" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary hover:accent-teal-300 transition-colors" />
+      
+      <input 
+        type="range" 
+        v-model.number="setTimeValue" 
+        min="1" 
+        :max="sliderMax" 
+        step="1" 
+        class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary hover:accent-teal-300 transition-colors" 
+      />
+      
       <div class="flex justify-between text-[10px] text-slate-600 mt-1">
         <span>1m</span>
-        <span>1h</span>
-        <span>2h</span>
+        <span v-if="sliderMax === 10">5m</span>
+        <span v-else>1h</span>
+        <span>{{ sliderMax }}m</span>
       </div>
     </div>
 
