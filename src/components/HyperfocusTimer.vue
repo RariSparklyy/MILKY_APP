@@ -59,8 +59,8 @@ const toggleTimer = async () => {
   store.timer.isRunning = !store.timer.isRunning;
   
   if (store.timer.isRunning) {
-    // STARTING LOG
-    if (store.timer.bodyDoubleEnabled && store.timer.activeTaskId) {
+    // STARTING LOG (Only log if in Focus mode with Body Double)
+    if (store.timer.mode === 'focus' && store.timer.bodyDoubleEnabled && store.timer.activeTaskId) {
       const taskName = store.getActiveTaskName();
       store.addMilkyLog(`I'll be watching while you work on: "${taskName}". Good luck!`, 'milky');
     }
@@ -68,28 +68,22 @@ const toggleTimer = async () => {
     interval = setInterval(() => {
       store.timer.timeLeft--;
 
-      // Midway Check-in
-      const midwayPoint = Math.floor(store.timer.initialDuration / 2);
-      if (store.timer.timeLeft === midwayPoint) {
-        triggerCheckIn();
+      // Midway Check-in (Only in Focus Mode)
+      if (store.timer.mode === 'focus') {
+        const midwayPoint = Math.floor(store.timer.initialDuration / 2);
+        if (store.timer.timeLeft === midwayPoint) {
+          triggerCheckIn();
+        }
       }
-      
-      // --- CRITICAL FIX START ---
       
       // 1. Enter Hyperfocus (Focus mode crosses 0)
       if (store.timer.timeLeft < 0 && store.timer.mode === 'focus') {
         store.timer.mode = 'hyperfocus';
       } 
-      
-      // 2. Stop ONLY if it is a BREAK session (Breaks don't have hyperfocus)
-      // We check specifically for 'short_break' or 'long_break'
+      // 2. Stop ONLY if it is a BREAK session
       else if (store.timer.timeLeft <= 0 && (store.timer.mode === 'short_break' || store.timer.mode === 'long_break')) {
         stopSession(); 
       }
-      
-      // (Note: We removed the generic 'else if' that was killing hyperfocus)
-      
-      // --- CRITICAL FIX END ---
 
     }, 1000);
   } else {
@@ -196,14 +190,15 @@ onUnmounted(() => clearInterval(interval));
       </div>
       <input type="range" v-model.number="setTimeValue" min="1" max="120" step="1" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary hover:accent-teal-300 transition-colors" />
       <div class="flex justify-between text-[10px] text-slate-600 mt-1">
-        <span>1m</span> <span>1h</span>
+        <span>1m</span>
+        <span>1h</span>
         <span>2h</span>
       </div>
     </div>
 
     <div class="flex gap-4 mb-6">
       <button @click="toggleTimer" 
-              :disabled="store.timer.bodyDoubleEnabled && !store.timer.activeTaskId"
+              :disabled="store.timer.mode === 'focus' && store.timer.bodyDoubleEnabled && !store.timer.activeTaskId"
               class="p-4 rounded-full transition border border-slate-600 shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               :class="store.timer.isRunning ? 'bg-slate-800' : 'bg-primary'">
         <component :is="store.timer.isRunning ? Pause : Play" class="w-6 h-6" :class="store.timer.isRunning ? 'text-primary' : 'text-slate-900'" />
@@ -221,15 +216,3 @@ onUnmounted(() => clearInterval(interval));
 
   </div>
 </template>
-
-<style scoped>
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #2dd4bf;
-  margin-top: -4px;
-  box-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
-}
-</style>
