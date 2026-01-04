@@ -18,7 +18,8 @@ import StatsHistory from './components/StatsHistory.vue';
         
         <HyperfocusTimer />
         <MoodReflection />
-        <BodyDouble />
+        
+        <StatsHistory />
       </div>
 
       <div class="xl:col-span-6 h-[85vh]"> 
@@ -26,7 +27,7 @@ import StatsHistory from './components/StatsHistory.vue';
       </div>
 
       <div class="xl:col-span-3 h-[85vh]">
-        <StatsHistory />
+        <BodyDouble />
       </div>
 
     </div>
