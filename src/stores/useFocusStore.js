@@ -1,4 +1,3 @@
-// src/stores/useFocusStore.js
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useStorage } from '@vueuse/core';
@@ -6,10 +5,10 @@ import { useStorage } from '@vueuse/core';
 export const useFocusStore = defineStore('focus', () => {
   // --- STATE ---
 
-  // 1. Task List (Persisted)
+  // 1. Task List
   const tasks = useStorage('milky-tasks', []);
 
-  // 2. Milky Logs / Chat History (Persisted)
+  // 2. Milky Logs / Chat History
   const milkyLogs = useStorage('milky-logs', [
     { 
       id: Date.now(), 
@@ -18,21 +17,20 @@ export const useFocusStore = defineStore('focus', () => {
     }
   ]);
 
-  // 3. Stats History (Persisted) - Stores completed sessions
+  // 3. Stats History
   const history = useStorage('milky-history', []);
 
-  // 4. Timer Configuration (Persisted)
+  // 4. Timer Configuration
   const timer = useStorage('milky-timer-config', {
     timeLeft: 25 * 60,
     initialDuration: 25 * 60,
-    mode: 'focus', // 'focus' | 'hyperfocus' | 'short_break' | 'long_break'
+    mode: 'focus', 
     isRunning: false,
-    activeTaskId: null, // ID of the task currently being worked on (Body Double)
-    bodyDoubleEnabled: false // Checkbox state
+    activeTaskId: null, 
+    bodyDoubleEnabled: false 
   });
 
-  // 5. Last Session Stats (Not Persisted)
-  // Used purely to pass data to the MoodReflection modal after a session ends
+  // 5. Last Session Stats
   const lastSession = ref({
     duration: 0,
     mode: 'focus',
@@ -41,24 +39,25 @@ export const useFocusStore = defineStore('focus', () => {
 
   // --- ACTIONS ---
 
-  // Add a Log Entry & Return ID (Crucial for safe async updates)
+  // FIX: Use Randomness to prevent ID collisions
+  const generateId = () => Date.now() + Math.random().toString(36).substr(2, 9);
+
   const addMilkyLog = (text, type = 'milky') => {
-    const id = Date.now();
+    const id = generateId(); // <--- UPDATED: Uses random string + timestamp
+    
     milkyLogs.value.unshift({
       id: id,
       text: text,
-      type: type // 'milky' or 'user'
+      type: type 
     });
 
-    // Keep history manageable (last 10 messages)
     if (milkyLogs.value.length > 10) {
       milkyLogs.value.pop();
     }
     
-    return id; // <--- Returns ID so we can update this specific bubble later
+    return id; 
   };
 
-  // Update a specific log by ID (Prevents race conditions)
   const updateLogContent = (id, newText) => {
     const log = milkyLogs.value.find(l => l.id === id);
     if (log) {
@@ -66,21 +65,19 @@ export const useFocusStore = defineStore('focus', () => {
     }
   };
 
-  // Add a New Task
   const addTask = (text, quadrant) => {
+    const id = generateId(); // Use the safer ID here too
     tasks.value.push({
-      id: Date.now(),
+      id: id,
       text,
-      quadrant, // 'do_first', 'schedule', 'delegate', 'eliminate'
+      quadrant, 
       completed: false,
-      aiSteps: [] // Initialize as empty array
+      aiSteps: []
     });
     
-    // System log
     addMilkyLog(`Added to ${quadrant.replace('_', ' ').toUpperCase()}: "${text}"`, 'milky');
   };
 
-  // Remove a Task
   const removeTask = (id) => {
     const index = tasks.value.findIndex(t => t.id === id);
     if (index !== -1) {
@@ -88,7 +85,6 @@ export const useFocusStore = defineStore('focus', () => {
     }
   };
 
-  // Toggle Completion Status
   const toggleTaskComplete = (id) => {
     const task = tasks.value.find(t => t.id === id);
     if (task) {
@@ -96,14 +92,11 @@ export const useFocusStore = defineStore('focus', () => {
     }
   };
 
-  // Set Timer Mode
   const setTimerMode = (mode) => {
     timer.value.mode = mode;
     timer.value.isRunning = false;
-    // Reset active task when changing modes manually
     timer.value.activeTaskId = null; 
     
-    // Default durations (UI slider will override these often)
     if (mode === 'focus') timer.value.initialDuration = 25 * 60;
     if (mode === 'short_break') timer.value.initialDuration = 5 * 60;
     if (mode === 'long_break') timer.value.initialDuration = 15 * 60;
@@ -111,19 +104,17 @@ export const useFocusStore = defineStore('focus', () => {
     timer.value.timeLeft = timer.value.initialDuration;
   };
 
-  // Helper: Get text of the currently active task
   const getActiveTaskName = () => {
     if (!timer.value.activeTaskId) return null;
     const task = tasks.value.find(t => t.id === timer.value.activeTaskId);
     return task ? task.text : "Unknown Task";
   };
 
-  // Add Completed Session to History
   const addToHistory = (sessionData) => {
     history.value.unshift({
-      id: Date.now(),
+      id: generateId(), // Safer ID
       timestamp: Date.now(),
-      duration: sessionData.duration, // in seconds
+      duration: sessionData.duration,
       mode: sessionData.mode,
       mood: sessionData.mood
     });
@@ -131,24 +122,18 @@ export const useFocusStore = defineStore('focus', () => {
 
   // --- EXPORT ---
   return { 
-    // State
     tasks, 
     milkyLogs, 
     timer, 
     lastSession, 
     history, 
-    
-    // Actions
     addTask, 
     removeTask, 
     toggleTaskComplete, 
-    
     addMilkyLog, 
     updateLogContent, 
-    
     setTimerMode, 
     getActiveTaskName, 
-    
     addToHistory 
   };
 });
