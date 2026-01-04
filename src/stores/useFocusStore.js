@@ -73,7 +73,7 @@ export const useFocusStore = defineStore('focus', () => {
       text,
       quadrant, // 'do_first', 'schedule', 'delegate', 'eliminate'
       completed: false,
-      aiSteps: '' // Initialize as empty string
+      aiSteps: [] // Initialize as empty array
     });
     
     // System log
