@@ -36,11 +36,10 @@ const formatTime = computed(() => {
   return `${store.timer.timeLeft < 0 ? '+' : ''}${m}:${s.toString().padStart(2, '0')}`;
 });
 
-// --- NEW: Filter incomplete tasks for the dropdown ---
+// Filter incomplete tasks for dropdown
 const availableTasks = computed(() => store.tasks.filter(t => !t.completed));
 
 const triggerCheckIn = async () => {
-  // Only check in if Body Double is ON and we have a task
   if (!store.timer.bodyDoubleEnabled || !store.timer.activeTaskId) return;
 
   const taskName = store.getActiveTaskName();
@@ -50,7 +49,6 @@ const triggerCheckIn = async () => {
     User is ${Math.floor(store.timer.initialDuration / 60 / 2)} minutes into a session.
     Task: "${taskName}".
     Give a very brief, gentle check-in (1 sentence). 
-    E.g., "How is [part of task] going?" or "Remember to unclench your jaw."
   `;
   
   const response = await askMilky(prompt, "You are a gentle body double.");
@@ -61,7 +59,7 @@ const toggleTimer = async () => {
   store.timer.isRunning = !store.timer.isRunning;
   
   if (store.timer.isRunning) {
-    // STARTING: If Body Double is active, log the start
+    // STARTING LOG
     if (store.timer.bodyDoubleEnabled && store.timer.activeTaskId) {
       const taskName = store.getActiveTaskName();
       store.addMilkyLog(`I'll be watching while you work on: "${taskName}". Good luck!`, 'milky');
@@ -70,18 +68,29 @@ const toggleTimer = async () => {
     interval = setInterval(() => {
       store.timer.timeLeft--;
 
-      // --- NEW: Check-in Logic (Midway point) ---
+      // Midway Check-in
       const midwayPoint = Math.floor(store.timer.initialDuration / 2);
       if (store.timer.timeLeft === midwayPoint) {
         triggerCheckIn();
       }
       
-      // Hyperfocus Logic
+      // --- CRITICAL FIX START ---
+      
+      // 1. Enter Hyperfocus (Focus mode crosses 0)
       if (store.timer.timeLeft < 0 && store.timer.mode === 'focus') {
         store.timer.mode = 'hyperfocus';
-      } else if (store.timer.timeLeft <= 0 && store.timer.mode !== 'focus') {
+      } 
+      
+      // 2. Stop ONLY if it is a BREAK session (Breaks don't have hyperfocus)
+      // We check specifically for 'short_break' or 'long_break'
+      else if (store.timer.timeLeft <= 0 && (store.timer.mode === 'short_break' || store.timer.mode === 'long_break')) {
         stopSession(); 
       }
+      
+      // (Note: We removed the generic 'else if' that was killing hyperfocus)
+      
+      // --- CRITICAL FIX END ---
+
     }, 1000);
   } else {
     clearInterval(interval);
@@ -104,7 +113,7 @@ const stopSession = async () => {
 
   // Reset Body Double Context
   store.timer.mode = 'focus';
-  store.timer.activeTaskId = null; // Clear task context
+  store.timer.activeTaskId = null; 
   store.timer.timeLeft = setTimeValue.value * 60;
   store.timer.initialDuration = setTimeValue.value * 60;
 };
@@ -185,7 +194,11 @@ onUnmounted(() => clearInterval(interval));
         <span>Duration</span>
         <span class="text-primary font-bold">{{ setTimeValue }} min</span>
       </div>
-      <input type="range" v-model.number="setTimeValue" min="5" max="120" step="5" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary hover:accent-teal-300 transition-colors" />
+      <input type="range" v-model.number="setTimeValue" min="1" max="120" step="1" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary hover:accent-teal-300 transition-colors" />
+      <div class="flex justify-between text-[10px] text-slate-600 mt-1">
+        <span>1m</span> <span>1h</span>
+        <span>2h</span>
+      </div>
     </div>
 
     <div class="flex gap-4 mb-6">
@@ -208,3 +221,15 @@ onUnmounted(() => clearInterval(interval));
 
   </div>
 </template>
+
+<style scoped>
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  margin-top: -4px;
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
+}
+</style>
