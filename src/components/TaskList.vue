@@ -18,18 +18,12 @@ const priorityMap = {
   eliminate: 4
 };
 
-// Computed: Automatically sorts tasks
 const sortedTasks = computed(() => {
   return [...store.tasks].sort((a, b) => {
-    // 1. Move Completed items to the very bottom
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
-    
-    // 2. Sort by Quadrant Priority
     const pA = priorityMap[a.quadrant] || 5;
     const pB = priorityMap[b.quadrant] || 5;
     if (pA !== pB) return pA - pB;
-    
-    // 3. Sort by Newest ID within same quadrant
     return b.id - a.id;
   });
 });
@@ -40,7 +34,6 @@ const addNew = () => {
   newTask.value = '';
 };
 
-// Breakdown
 const breakDown = async (task) => {
   if (task.aiSteps) return;
   const prompt = `Break down "${task.text}" into 3 very small steps. Return HTML <li> tags only.`;
@@ -48,12 +41,10 @@ const breakDown = async (task) => {
   task.aiSteps = result;
 };
 
-// Handle Task Completion with AI Reward
 const handleCheck = async (task) => {
   store.toggleTaskComplete(task.id);
 
   if (task.completed) {
-    // 1. Log placeholder and CAPTURE ID
     const loadingId = store.addMilkyLog(`🎉 Hooray! Finishing "${task.text}"...`);
 
     const qMap = {
@@ -72,13 +63,10 @@ const handleCheck = async (task) => {
     `;
 
     const praise = await askMilky(prompt, "You are an excited cheerleader.");
-    
-    // 2. Update SPECIFIC log
     store.updateLogContent(loadingId, praise);
   }
 };
 
-// Styling Helpers
 const getBadgeColor = (q) => {
   if (q === 'do_first') return 'bg-urgent text-slate-900';
   if (q === 'schedule') return 'bg-blue-500 text-slate-900';
@@ -102,7 +90,7 @@ const selectorClass = computed(() => {
 </script>
 
 <template>
-  <div class="bg-surface p-6 rounded-xl shadow-lg border border-slate-700 h-full flex flex-col">
+  <div class="bg-surface p-6 rounded-xl shadow-lg border border-slate-700 h-[500px] flex flex-col">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-xl font-bold text-slate-100">Eisenhower Matrix</h2>
       <span class="text-xs text-muted uppercase tracking-wider">{{ store.tasks.filter(t => !t.completed).length }} Active</span>

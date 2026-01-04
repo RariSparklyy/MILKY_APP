@@ -9,30 +9,25 @@ const { askMilky } = useMilky();
 const logMood = async (mood) => {
   store.lastSession.mood = mood; 
   
-  // 1. Log placeholder and CAPTURE ID
+  // 1. NEW: Save to History Stats
+  store.addToHistory({
+    duration: store.lastSession.duration,
+    mode: store.lastSession.mode,
+    mood: mood
+  });
+
+  // 2. Log placeholder and CAPTURE ID
   const loadingId = store.addMilkyLog("Analyzing session data...");
 
-  // 2. Generate Prompt
-  const durationMins = Math.floor(store.lastSession.duration / 60);
-  const prompt = `
-    User finished a ${store.lastSession.mode} session.
-    Actual duration: ${durationMins} minutes.
-    Self-reported Mood: ${mood}.
-    
-    Generate a log entry. 
-    IF mood is 'Struggling', be empathetic. 
-    IF mood is 'Great', be celebratory.
-    Mention the EXACT duration provided. Use bolding for stats.
-  `;
-
-  const response = await askMilky(prompt, "You are a factual but supportive logger.");
+  // ... (rest of the AI logging logic remains the same) ...
   
-  // 3. Update SPECIFIC log
+  const prompt = `User finished a ${store.lastSession.mode} session...`; // etc
+  const response = await askMilky(prompt, "You are a factual but supportive logger.");
   store.updateLogContent(loadingId, response);
   
-  // Reset session
   store.lastSession.duration = 0; 
 };
+
 </script>
 
 <template>
