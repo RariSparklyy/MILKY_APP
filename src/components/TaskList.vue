@@ -2,12 +2,14 @@
 import { ref, computed } from 'vue';
 import { useFocusStore } from '../stores/useFocusStore';
 import { useMilky } from '../composables/useMilky';
-import { Wand2, Trash2, CheckCircle2, Circle, CornerDownRight, CheckSquare, Square } from 'lucide-vue-next';
+import { Wand2, Trash2, CheckCircle2, Circle, CheckSquare, Square, Info, X, LayoutGrid, Lightbulb, Zap } from 'lucide-vue-next';
+import { marked } from 'marked';
 
 const store = useFocusStore();
 const { askMilky, isThinking } = useMilky();
 const newTask = ref('');
 const selectedQuadrant = ref('do_first');
+const showInfo = ref(false); 
 
 // Priority Map for Sorting
 const priorityMap = {
@@ -33,9 +35,7 @@ const addNew = () => {
   newTask.value = '';
 };
 
-// --- UPDATED: Interactive Breakdown Logic ---
 const breakDown = async (task) => {
-  // If steps already exist (and it's an array with items), don't fetch again
   if (Array.isArray(task.aiSteps) && task.aiSteps.length > 0) return;
 
   const prompt = `
@@ -47,13 +47,9 @@ const breakDown = async (task) => {
   
   try {
     const result = await askMilky(prompt, "You are a JSON generator.");
-    
-    // 1. Extract JSON array (in case AI adds extra text)
     const jsonMatch = result.match(/\[.*\]/s);
     if (jsonMatch) {
       const strings = JSON.parse(jsonMatch[0]);
-      
-      // 2. Convert strings to interactive objects
       task.aiSteps = strings.map((s, i) => ({
         id: Date.now() + i,
         text: s,
@@ -66,7 +62,6 @@ const breakDown = async (task) => {
   }
 };
 
-// Toggle a sub-step
 const toggleStep = (step) => {
   step.completed = !step.completed;
 };
@@ -90,7 +85,6 @@ const handleCheck = async (task) => {
   }
 };
 
-// Styling Helpers
 const getBadgeColor = (q) => {
   if (q === 'do_first') return 'bg-urgent text-slate-900';
   if (q === 'schedule') return 'bg-blue-500 text-slate-900';
@@ -114,10 +108,80 @@ const selectorClass = computed(() => {
 </script>
 
 <template>
-  <div class="bg-surface p-6 rounded-xl shadow-lg border border-slate-700 h-full min-h-[500px] flex flex-col">
+  <div class="bg-surface p-6 rounded-xl shadow-lg border border-slate-700 h-full min-h-[500px] flex flex-col relative">
+    
+    <Transition name="fade">
+      <div v-if="showInfo" class="absolute inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl" @click="showInfo = false"></div>
+        
+        <div class="bg-slate-900 border border-slate-600 rounded-xl p-6 shadow-2xl relative w-full h-full overflow-y-auto custom-scrollbar">
+          <button @click="showInfo = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-100">
+            <X class="w-5 h-5" />
+          </button>
+
+          <h3 class="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+            <LayoutGrid class="w-5 h-5" /> The Matrix & Tips
+          </h3>
+
+          <div class="space-y-6 text-sm text-slate-300">
+            
+            <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+              <h4 class="font-bold text-slate-100 mb-2 flex items-center gap-2">
+                <Zap class="w-4 h-4 text-yellow-400" /> Eisenhower Matrix
+              </h4>
+              <p class="mb-2 text-slate-400">Prioritize tasks by Urgency and Importance.</p>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2">
+                  <span class="text-[10px] font-bold bg-urgent text-slate-900 px-1.5 rounded mt-0.5">DO FIRST</span>
+                  <span class="text-slate-400">Crises, Deadlines. Do these now to reduce stress.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-[10px] font-bold bg-blue-500 text-slate-900 px-1.5 rounded mt-0.5">SCHEDULE</span>
+                  <span class="text-slate-400">Goals, Planning. High value, low pressure.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-[10px] font-bold bg-yellow-500 text-slate-900 px-1.5 rounded mt-0.5">DELEGATE</span>
+                  <span class="text-slate-400">Interruptions, Admin. Fast but low value.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+              <h4 class="font-bold text-slate-100 mb-2 flex items-center gap-2">
+                <Wand2 class="w-4 h-4 text-purple-400" /> AI Breakdown
+              </h4>
+              <p class="text-slate-400">
+                Overwhelmed by a big task? 
+                Hover over the task and click the <strong>Magic Wand</strong> icon. 
+                Milky will split it into tiny, checkable steps so you can start easily.
+              </p>
+            </div>
+
+            <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+              <h4 class="font-bold text-slate-100 mb-2 flex items-center gap-2">
+                <Lightbulb class="w-4 h-4 text-primary" /> Structuring Tips
+              </h4>
+              <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                <li><strong>Start with a Verb:</strong> "Email John" is better than just "John".</li>
+                <li><strong>The Rule of 3:</strong> Try to only have 3 "Do First" tasks per day.</li>
+                <li><strong>Eat the Frog:</strong> Do the scariest task first thing in the morning.</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-xl font-bold text-slate-100">Eisenhower Matrix</h2>
-      <span class="text-xs text-muted uppercase tracking-wider">{{ store.tasks.filter(t => !t.completed).length }} Active</span>
+      
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-muted uppercase tracking-wider">{{ store.tasks.filter(t => !t.completed).length }} Active</span>
+        <button @click="showInfo = true" class="p-1.5 text-slate-500 hover:text-primary transition bg-slate-800/50 rounded-lg hover:bg-slate-700" title="Task Tips">
+          <Info class="w-4 h-4" />
+        </button>
+      </div>
     </div>
     
     <div class="flex flex-col gap-3 mb-6">
@@ -218,5 +282,15 @@ const selectorClass = computed(() => {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modal Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
