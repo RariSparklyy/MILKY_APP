@@ -15,7 +15,7 @@ const setTimeValue = ref(25);
 const radius = 120;
 const circumference = 2 * Math.PI * radius;
 
-// --- NEW: Dynamic Slider Limits ---
+// --- Dynamic Slider Limits ---
 const sliderMax = computed(() => {
   if (store.timer.mode === 'short_break') return 10;
   return 120; // Focus & Long Break
@@ -64,6 +64,7 @@ const toggleTimer = async () => {
   store.timer.isRunning = !store.timer.isRunning;
   
   if (store.timer.isRunning) {
+    // 1. STARTING LOG (Only if Focus + Body Double + Task Selected)
     if (store.timer.mode === 'focus' && store.timer.bodyDoubleEnabled && store.timer.activeTaskId) {
       const taskName = store.getActiveTaskName();
       store.addMilkyLog(`I'll be watching while you work on: "${taskName}". Good luck!`, 'milky');
@@ -72,6 +73,7 @@ const toggleTimer = async () => {
     interval = setInterval(() => {
       store.timer.timeLeft--;
 
+      // 2. Midway Check-in (Only in Focus Mode)
       if (store.timer.mode === 'focus') {
         const midwayPoint = Math.floor(store.timer.initialDuration / 2);
         if (store.timer.timeLeft === midwayPoint) {
@@ -79,11 +81,32 @@ const toggleTimer = async () => {
         }
       }
       
-      if (store.timer.timeLeft < 0 && store.timer.mode === 'focus') {
+      // 3. Hyperfocus Trigger (Exactly at 00:00)
+      if (store.timer.timeLeft === 0 && store.timer.mode === 'focus') {
         store.timer.mode = 'hyperfocus';
-      } else if (store.timer.timeLeft <= 0 && (store.timer.mode === 'short_break' || store.timer.mode === 'long_break')) {
+
+        // Trigger Body Double Update
+        if (store.timer.bodyDoubleEnabled && store.timer.activeTaskId) {
+          const taskName = store.getActiveTaskName();
+          
+          const loadingId = store.addMilkyLog("Hyperfocus activated! 🚀", 'milky');
+
+          const prompt = `
+            The timer just hit 00:00, but the user is still going!
+            They have entered HYPERFOCUS mode on task: "${taskName}".
+            Give them a short, high-energy encouragement to ride the dopamine wave.
+          `;
+
+          askMilky(prompt, "You are an excited flow-state coach.")
+            .then(response => store.updateLogContent(loadingId, response));
+        }
+      }
+
+      // 4. Stop ONLY if it is a BREAK session (Breaks don't go negative)
+      else if (store.timer.timeLeft <= 0 && (store.timer.mode === 'short_break' || store.timer.mode === 'long_break')) {
         stopSession(); 
       }
+
     }, 1000);
   } else {
     clearInterval(interval);
@@ -226,3 +249,15 @@ onUnmounted(() => clearInterval(interval));
 
   </div>
 </template>
+
+<style scoped>
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #2dd4bf;
+  margin-top: -4px;
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
+}
+</style>
