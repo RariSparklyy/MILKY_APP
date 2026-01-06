@@ -59,7 +59,7 @@ Milky relies on a local LLM to function. The application can still be launched w
 
 ```bash
 # Clone the repository
-git clone [https://github.com/RariSparklyy/MILKY_APP.git](https://github.com/RariSparklyy/MILKY_APP.git)
+git clone [https://github.com/your-username/milky-adhd-assistant.git](https://github.com/your-username/milky-adhd-assistant.git)
 
 # Navigate into the folder
 cd MILKY_APP
