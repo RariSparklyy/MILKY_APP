@@ -1,35 +1,35 @@
-# 🥛 Milky - Local-First ADHD Assistant
+# Milky - Local-First ADHD Assistant
 
-**Milky** is a distraction-free, privacy-focused productivity dashboard designed specifically for neurodivergent brains. It combines an adaptive **Hyperfocus Timer**, an **Eisenhower Matrix** task manager, and an **AI Body Double** powered by a local LLM (Ollama) to help you get things done without the stress.
+**Milky** is a privacy-focused productivity dashboard designed specifically for neurodivergent individuals. It combines an adaptive **Hyperfocus Timer**, an **Eisenhower Matrix** task manager, and an **AI Body Double** powered by a local LLM (Ollama) to help you get things done without the stress.
 
-> **Note:** This application is "Local-First." Your tasks, chat history, and focus stats are stored in your browser and your local AI model. No data is sent to the cloud.
+> **Note:** This application was developed as part of the Final Year Project for the Digital Systems module of the May 2023 Bachelor of Computer Science cohort at UWE / Villa College.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🧠 Adaptive Hyperfocus Timer
+### Adaptive Hyperfocus Timer
 * **Dynamic Duration:** Change timer duration instantly with a slider.
 * **Hyperfocus Mode:** If the timer hits `00:00` and you are in the zone, Milky doesn't ring an alarm. instead, it enters "Flow State," counting *up* to track your bonus productivity.
 * **Smart Breaks:** Short breaks are capped at 10 minutes to prevent momentum loss.
 
-### 👥 AI Body Double
+### AI Body Double
 * **Accountability Partner:** Toggle "Body Double Mode" during a focus session.
 * **Context Aware:** Milky knows exactly which task you selected. If you chat with it, it gently steers you back to work.
 * **Auto Check-ins:** Milky will check in on you halfway through your session to ensure you haven't drifted off.
 
-### ✅ Eisenhower Matrix Task List
+### Eisenhower Matrix Task List
 * **Prioritization:** Sorts tasks into 4 quadrants: *Do First (Urgent)*, *Schedule*, *Delegate*, and *Eliminate*.
 * **Magic Wand (AI Breakdown):** Overwhelmed by a vague task like "Clean Room"? Click the wand, and Milky breaks it down into interactive, bite-sized sub-steps.
 * **Gamified Praise:** Get context-aware, high-energy praise whenever you tick off a task.
 
-### 📊 Mood & Stats
+### Mood & Stats
 * **Reflection:** Log your mood after every session (Great, Neutral, Struggling).
 * **History:** Track total focus hours, session counts, and completed tasks over time.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Framework:** [Vue 3](https://vuejs.org/) (Composition API)
 * **Build Tool:** [Vite](https://vitejs.dev/)
@@ -40,8 +40,6 @@
 
 ---
 
-## 🚀 Getting Started
-
 ### Prerequisites
 
 1.  **Node.js** (v18 or higher)
@@ -49,9 +47,9 @@
 
 ### 1. Setup Ollama (The AI Brain)
 
-Milky relies on a local LLM to function.
+Milky relies on a local LLM to function. The application can still be launched without a live ollama server but the AI functionalities will be disabled.
 1.  Download and install [Ollama](https://ollama.com/download).
-2.  Pull a model (we recommend `llama3` or `mistral`). Open your terminal/command prompt and run:
+2.  Pull a model (`llama3` or `mistral` works). Open your terminal/command prompt and run:
     ```bash
     ollama run llama3
     ```
@@ -68,3 +66,13 @@ cd milky-adhd-assistant
 
 # Install dependencies
 npm install
+
+```
+
+
+### 2. Launch Project
+
+```bash
+
+# Launch application
+npm run dev
