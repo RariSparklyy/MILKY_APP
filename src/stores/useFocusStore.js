@@ -43,7 +43,7 @@ export const useFocusStore = defineStore('focus', () => {
   const generateId = () => Date.now() + Math.random().toString(36).substr(2, 9);
 
   const addMilkyLog = (text, type = 'milky') => {
-    const id = generateId(); // <--- UPDATED: Uses random string + timestamp
+    const id = generateId(); // Uses random string + timestamp
     
     milkyLogs.value.unshift({
       id: id,

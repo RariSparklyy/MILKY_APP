@@ -118,8 +118,6 @@ const parseMarkdown = (text) => {
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
-/* NOTE: I reversed the array in the v-for using slice().reverse() 
-   so the scrollbar starts at the bottom naturally like a chat app */
 .list-enter-active,
 .list-leave-active {
   transition: all 0.3s ease;

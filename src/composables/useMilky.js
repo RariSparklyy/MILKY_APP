@@ -3,7 +3,7 @@ import { ref } from 'vue';
 export function useMilky() {
   const isThinking = ref(false);
 
-  // Default system prompt ensuring no emojis and supportive tone [cite: 141]
+  // Default system prompt ensuring supportive tone
   const SYSTEM_PROMPT = `You are Milky, an ADHD focus assistant. 
   Your goal is to lower activation energy for tasks.
   Keep responses concise, supportive, and strictly formatted.
@@ -16,7 +16,7 @@ export function useMilky() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'llama3.2', // Ensure you have this pulled in Ollama [cite: 375]
+          model: 'llama3.2', // Ensure you have this pulled in Ollama
           prompt: userPrompt,
           system: `${SYSTEM_PROMPT} ${specificContext}`,
           stream: false
@@ -34,3 +34,4 @@ export function useMilky() {
 
   return { askMilky, isThinking };
 }
+
