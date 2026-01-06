@@ -62,7 +62,7 @@ Milky relies on a local LLM to function. The application can still be launched w
 git clone [https://github.com/your-username/milky-adhd-assistant.git](https://github.com/your-username/milky-adhd-assistant.git)
 
 # Navigate into the folder
-cd milky-adhd-assistant
+cd MILKY_APP
 
 # Install dependencies
 npm install
