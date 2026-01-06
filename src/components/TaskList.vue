@@ -174,7 +174,7 @@ const selectorClass = computed(() => {
     </Transition>
 
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-bold text-slate-100">Eisenhower Matrix</h2>
+      <h2 class="text-xl font-bold text-slate-100">YOUR TASKLIST</h2>
       
       <div class="flex items-center gap-3">
         <span class="text-xs text-muted uppercase tracking-wider">{{ store.tasks.filter(t => !t.completed).length }} Active</span>

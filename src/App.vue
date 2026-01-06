@@ -12,7 +12,7 @@ import StatsHistory from './components/StatsHistory.vue';
       
       <div class="xl:col-span-3 space-y-6 flex flex-col h-full">
         <header>
-          <h1 class="text-3xl font-bold tracking-tight text-primary">Milky</h1>
+          <h1 class="text-3xl font-bold tracking-tight text-primary">MILKY</h1>
           <p class="text-muted text-sm mt-1">YOUR FRIENDLY ADHD ASSISTANT AND COMPANION</p>
         </header>
         
